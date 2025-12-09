@@ -1,4 +1,3 @@
-# vehicles.py
 import math
 EPSILON = 0.001
 
