@@ -32,7 +32,7 @@ class CenterPoint:
         new_coords = []
         for i in range(self.d):
             coord_sum = sum(point.coords[i] for point in self.assignedPoints)
-            new_coords.append(coord_sum / len(self.assignedPoints))
+            new_coords.append(round(coord_sum / len(self.assignedPoints), 4))
             if abs(new_coords[-1] - self.coords[i]) > maxDiff:
                 maxDiff = abs(new_coords[-1] - self.coords[i])
         if len(new_coords) != self.d:
