@@ -1,6 +1,51 @@
-from points import Point, CenterPoint
-ITER = 400
+import sys, math
 
+global DIM, K, ITER, points, EPSILON
+DIM = None
+K = None
+ITER = 400
+points = []
+EPSILON = 0.001
+
+class Point:
+    def __init__(self, coordinates):
+        self.coords = tuple(coordinates)
+        self.d = len(self.coords)
+        self.closestCenter = None
+
+    def updateClosestCenter(self, CenterPoints):
+        for center in CenterPoints:
+            dist = self.distanceTo(center)
+            if self.closestCenter is None or dist < self.distanceTo(self.closestCenter):
+                self.closestCenter = center
+
+    def distanceTo(self, otherPoint):
+        if self.d != otherPoint.d:
+            raise ValueError("Points must have the same dimension to calculate distance.")
+        return math.sqrt(sum((a - b) ** 2 for a, b in zip(self.coords, otherPoint.coords)))
+
+class CenterPoint:
+    def __init__(self, coordinates):
+        self.coords = tuple(coordinates)
+        self.d = len(self.coords)
+        self.assignedPoints = []
+
+    def updateCoordinates(self):
+        maxDiff = 0
+        if not self.assignedPoints:
+            return
+        new_coords = []
+        for i in range(self.d):
+            coord_sum = sum(point.coords[i] for point in self.assignedPoints)
+            new_coords.append(round(coord_sum / len(self.assignedPoints), 4))
+            if abs(new_coords[-1] - self.coords[i]) > maxDiff:
+                maxDiff = abs(new_coords[-1] - self.coords[i])
+        if len(new_coords) != self.d:
+            raise ValueError("Dimension mismatch when updating coordinates.")
+        self.coords = tuple(new_coords)
+        self.assignedPoints = []
+        return maxDiff > EPSILON
+    
 def updateAllPoints(points, centerPoints):
     for point in points:
         point.updateClosestCenter(centerPoints)
@@ -25,3 +70,56 @@ def kmeans(points, k, max_iterations=ITER):
         if updateAllCenters(centerPoints):
             break
     return centerPoints
+
+def parse(inp):
+    for line in inp:
+        coaordinates = line.strip().split(",")
+        coaordinates = [float(co) for co in coaordinates]
+        if DIM == None:
+            DIM = len(coaordinates)
+        if len(coaordinates) != DIM:
+            if not line and len(inp) == len(points):
+                return
+            else:
+                raise Exception()
+        points.append(Point(coaordinates))
+    return
+
+def main():
+    #update K and ITER
+    try:
+        K = int(sys.argv[1])
+    except Exception:
+        print("Incorrect number of clusters!")
+        return
+    if K < 2:
+        print("Incorrect number of clusters!")
+        return
+    if len(sys.argv) > 2:
+        try:
+            ITER = int(sys.argv[2])
+        except Exception:
+            print("Incorrect number of iterations!")
+        if (ITER < 2) or (ITER > 799):
+            print("Incorrect number of iterations!")
+            return
+
+    #parse and dreate points
+    parse(sys.stdin)
+    if points:
+        final_centers = kmeans(points, K, ITER)
+        
+        print("\n--- Final Cluster Centers ---")
+        for i, center in enumerate(final_centers):
+            print(f"Center {i+1}: {center.coords}")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception:
+        print("An Error Has Occured")
+
+
+
+
