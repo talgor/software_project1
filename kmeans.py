@@ -72,6 +72,7 @@ def kmeans(points, k, max_iterations=ITER):
     return centerPoints
 
 def parse(inp):
+    global DIM, points
     for line in inp:
         coaordinates = line.strip().split(",")
         coaordinates = [float(co) for co in coaordinates]
@@ -107,7 +108,7 @@ def main():
     #parse and dreate points
     parse(sys.stdin)
     if points:
-        final_centers = kmeans(points, K, ITER)
+        final_centers = kmeans(points, K)
         
         print("\n--- Final Cluster Centers ---")
         for i, center in enumerate(final_centers):
