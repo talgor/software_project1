@@ -31,24 +31,24 @@ class CenterPoint:
         self.assignedPoints = []
 
     def updateCoordinates(self):
-        maxDiff = 0
+        sum_squared = 0
         if not self.assignedPoints:
             return
         new_coords = []
         for i in range(self.d):
             coord_sum = sum(point.coords[i] for point in self.assignedPoints)
             new_coords.append(round(coord_sum / len(self.assignedPoints), 4))
-            if abs(new_coords[-1] - self.coords[i]) > maxDiff:
-                maxDiff = abs(new_coords[-1] - self.coords[i])
+            squared_diff = (new_coords[-1] - self.coords[i]) ** 2
+            sum_squared += squared_diff
         if len(new_coords) != self.d:
             raise ValueError("Dimension mismatch when updating coordinates.")
         self.coords = tuple(new_coords)
         self.assignedPoints = []
-        return maxDiff > EPSILON
+        movement_distance = math.sqrt(sum_squared)
+        return movement_distance > EPSILON
     
 def updateAllPoints(points, centerPoints):
     for point in points:
-        point.updateClosestCenter(centerPoints)
         try:
             point.updateClosestCenter(centerPoints)
         except Exception as e:
@@ -115,10 +115,10 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
+    # try:
         main()
-    except Exception:
-        print("An Error Has Occured")
+    # except Exception:
+        # print("An Error Has Occured")
 
 
 
