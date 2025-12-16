@@ -1,8 +1,3 @@
-//todo: get vector x and k center vectors (all the same type)
-//todo: compute distances from x to each center
-//todo: find the index of the center with the minimum distance
-//todo: return that index
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -91,11 +86,12 @@ void update_all_points(struct vector *vectors, struct center *centers)
     }
 }
 
+
 int main(int argc, char **argv)
 {
     struct vector *head_vec, *curr_vec, *next_vec;
     struct cord *head_cord, *curr_cord, *next_cord;
-    int i, j, rows = 0, cols;
+    int i, j, rows = 0, cols, K=argv[1], iter;
     double n;
     char c;
 
@@ -128,6 +124,19 @@ int main(int argc, char **argv)
         curr_cord->next = malloc(sizeof(struct cord));
         curr_cord = curr_cord->next;
         curr_cord->next = NULL;
+    }
+
+    if ((K<1) || (K>rows)){
+        printf("Incorrect number of clusters");
+    } 
+    if (argc > 2){
+        iter = (int)argv[2];
+        if ((iter<2) || (iter>799)){
+            printf("Incorrect maximum iteration!");
+        }
+    }
+    else{
+        iter = 400;
     }
 
     return 0;
