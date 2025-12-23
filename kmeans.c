@@ -92,6 +92,9 @@ struct cord* create_cord_node(double val) {
 struct center *create_center(struct vector *vec)
 {
     struct center *new_center = malloc(sizeof(struct center));
+    struct cord *curr_v, *last_center, *last_sum;
+    struct cord *new_center_cord, *new_sum_cord;
+
     if (new_center == NULL) {
         printf("An Error Has Occurred\n");
         free_all();
@@ -103,13 +106,13 @@ struct center *create_center(struct vector *vec)
     new_center->cords = NULL;
     new_center->sum_assigned = NULL;
 
-    struct cord *curr_v = vec->cords;
-    struct cord *last_center = NULL;
-    struct cord *last_sum = NULL;
+    curr_v = vec->cords;
+    last_center = NULL;
+    last_sum = NULL;
 
     while (curr_v != NULL) {
-        struct cord *new_center_cord = create_cord_node(curr_v->value);
-        struct cord *new_sum_cord = create_cord_node(0.0);
+        new_center_cord = create_cord_node(curr_v->value);
+        new_sum_cord = create_cord_node(0.0);
 
         if (new_center->cords == NULL) {
             new_center->cords = new_center_cord;
@@ -144,13 +147,14 @@ struct center *closest_center(struct vector *vec, struct center *centers)
 {
     struct center *curr_center = centers;
     struct center *closest = NULL;
-    double min_distance = INFINITY;
+    double min_distance = HUGE_VAL, distance;
+    struct cord *vec_cord, *center_cord;
 
     while(curr_center != NULL)
     {
-        struct cord *vec_cord = vec->cords;
-        struct cord *center_cord = curr_center->cords;
-        double distance = points_distance(vec_cord, center_cord);
+        vec_cord = vec->cords;
+        center_cord = curr_center->cords;
+        distance = points_distance(vec_cord, center_cord);
 
         if (distance < min_distance)
         {
@@ -167,11 +171,13 @@ struct center* init_centers(struct vector *vectors, int K)
     struct center *head_center = NULL;
     struct center *last_center = NULL;
     struct vector *curr_vec = vectors;
-    for(int i=0; i<K && curr_vec != NULL; i++) {
-        struct center *new_center = create_center(curr_vec);
+    struct center *new_center;
+    int i;
+    for(i=0; i<K && curr_vec != NULL; i++) {
+        new_center = create_center(curr_vec);
         if(head_center == NULL) {
             head_center = new_center;
-            global_cent_ptr = head_center; // Store global pointer for cleanup if needed
+            global_cent_ptr = head_center; /* Store global pointer for cleanup if needed */
         } else {
             last_center->next = new_center;
         }
@@ -197,9 +203,10 @@ void assign_vector_to_center(struct vector *vec, struct center *center)
 void update_all_points(struct vector *vectors, struct center *centers)
 {
     struct vector *curr_vec = vectors;
+    struct center *closest;
     while (curr_vec != NULL && curr_vec->next != NULL)
     {
-        struct center *closest = closest_center(curr_vec, centers);
+        closest = closest_center(curr_vec, centers);
         assign_vector_to_center(curr_vec, closest);
         curr_vec = curr_vec->next;
     }
@@ -208,9 +215,9 @@ void update_all_points(struct vector *vectors, struct center *centers)
 void delete_point_from_its_center(struct center *centers, struct vector *point)
 {
     struct center *closest = closest_center(point, centers);
-    closest->num_assigned--;
     struct cord *p_curr = point->cords;
     struct cord *c_curr = closest->sum_assigned;
+    closest->num_assigned--;
     while (p_curr != NULL && c_curr != NULL)
     {
         c_curr->value -= p_curr->value;
@@ -225,6 +232,8 @@ int update_all_centers(struct center *centers, struct vector *first_point)
     int moved = 0;
     double eps = 0.001;
     struct center *curr_cent = centers;
+    struct cord *tmp;
+
     while (curr_cent!=NULL)
     {
         if (curr_cent->num_assigned == 0){
@@ -236,7 +245,7 @@ int update_all_centers(struct center *centers, struct vector *first_point)
     curr_cent = centers;
     while (curr_cent!=NULL)
     {
-        // calculate the updated coaordinates, and the distance
+        /* Calculate the updated coaordinates, and the distance */
         struct cord *curr_cord = curr_cent->sum_assigned;
         while (curr_cord!=NULL)
         {
@@ -248,8 +257,8 @@ int update_all_centers(struct center *centers, struct vector *first_point)
             moved = 1;
         }
 
-        // update the center, and delete all assigned points from it
-        struct cord *tmp = curr_cent->cords;
+        /* Update the center, and delete all assigned points from it */
+        tmp = curr_cent->cords;
         curr_cent->cords = curr_cent->sum_assigned;
         curr_cord = tmp;
         while (curr_cord!=NULL)
@@ -267,8 +276,10 @@ int update_all_centers(struct center *centers, struct vector *first_point)
 void print_centers(struct center *centers)
 {
     struct center *curr_center = centers;
+    struct cord *curr_cord;
+
     while (curr_center != NULL) {
-        struct cord *curr_cord = curr_center->cords;
+        curr_cord = curr_center->cords;
         while (curr_cord != NULL) {
             printf("%.4f", curr_cord->value);
             if (curr_cord->next != NULL) {
@@ -285,7 +296,8 @@ int main(int argc, char **argv)
 {
     struct vector *head_vec, *curr_vec;
     struct cord *head_cord, *curr_cord;
-    int rows = 0, K=atoi(argv[1]), iter;
+    struct center *centers;
+    int rows = 0, K=atoi(argv[1]), iter, count, changed;
     double n;
     char c;
 
@@ -304,7 +316,7 @@ int main(int argc, char **argv)
         free_all();
         exit(1);
     }
-    global_vec_ptr = head_vec; // Store global pointer for cleanup if needed
+    global_vec_ptr = head_vec; /* Store global pointer for cleanup if needed */
     curr_vec = head_vec;
     curr_vec->next = NULL;
 
@@ -365,9 +377,11 @@ int main(int argc, char **argv)
         iter = 400;
     }
 
-    struct center *centers = init_centers(head_vec, K);
-    int count = 0;
-    int changed = 1;
+    centers = init_centers(head_vec, K);
+
+    count = 0;
+    changed = 1;
+
     while (changed && (count < iter))
     {
         update_all_points(head_vec, centers);
