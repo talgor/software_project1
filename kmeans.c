@@ -17,9 +17,19 @@ struct center
 {
     struct center *next;
     struct cord *cords;
-    struct vector *assigned_vectors;
+    struct cord *sum_assigned;
     int num_assigned;
 };
+
+struct center create_center(struct vector *vec)
+{
+    struct center new_center;
+    new_center.cords = vec->cords;
+    new_center.next = NULL;
+    new_center.sum_assigned = NULL;
+    new_center.num_assigned = 0;
+    return new_center;
+}
 
 struct center *closest_center(struct vector *vec, struct center *centers)
 {
@@ -54,23 +64,9 @@ struct center *closest_center(struct vector *vec, struct center *centers)
 
 void assign_vector_to_center(struct vector *vec, struct center *center)
 {
-    if (center->assigned_vectors == NULL)
-    {
-        center->assigned_vectors = vec;
-        center->num_assigned = 1;
-        vec->next = NULL;
-    }
-    else
-    {
-        struct vector *curr = center->assigned_vectors;
-        while (curr->next != NULL)
-        {
-            curr = curr->next;
-        }
-        curr->next = vec;
-        vec->next = NULL;
-        center->num_assigned += 1;
-    }
+    struct cord *vec_cord = vec->cords;
+    struct cord *sum_cord = center->sum_assigned;
+    //todo: continue
 }
 
 //update all points and assign them to their closest center
