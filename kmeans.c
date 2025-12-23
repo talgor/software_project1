@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <math.h>
 
+static struct vector *global_vec_ptr = NULL;
+static struct center *global_cent_ptr = NULL;
+
 struct cord
 {
     double value;
@@ -22,8 +25,65 @@ struct center
     int num_assigned;
 };
 
+void delete_point(struct cord*);
+void delete_points_list(struct vector*);
+void delete_centers_list(struct center*);
+void free_all();
+struct cord* create_cord_node(double);
+struct center *create_center(struct vector*);
+double points_distance(struct cord*, struct cord*);
+struct center *closest_center(struct vector*, struct center*);
+struct center* init_centers(struct vector*, int);
+void assign_vector_to_center(struct vector*, struct center*);
+void update_all_points(struct vector*, struct center*);
+void delete_point_from_its_center(struct center*, struct vector*);
+int update_all_centers(struct center*, struct vector*);
+void print_centers(struct center*);
+int main(int, char**);
+
+void delete_point(struct cord *curr)
+{
+    if (curr != NULL)
+    {
+        delete_point(curr->next);
+        free(curr);
+    }
+}
+
+void delete_points_list(struct vector *curr)
+{
+    if (curr != NULL)
+    {
+        delete_point(curr->cords);
+        delete_points_list(curr->next);
+        free(curr);
+    }
+}
+
+void delete_centers_list(struct center *curr)
+{
+    if (curr != NULL)
+    {
+        delete_point(curr->cords);
+        delete_point(curr->sum_assigned);
+        delete_centers_list(curr->next);
+        free(curr);
+    }
+}
+
+void free_all()
+{
+    delete_points_list(global_vec_ptr);
+    delete_centers_list(global_cent_ptr);
+}
+
 struct cord* create_cord_node(double val) {
     struct cord *new_node = malloc(sizeof(struct cord));
+    if (new_node == NULL) {
+        printf("An Error Has Occurred\n");
+        free_all();
+        exit(1);
+    }
     new_node->value = val;
     new_node->next = NULL;
     return new_node;
@@ -32,6 +92,11 @@ struct cord* create_cord_node(double val) {
 struct center *create_center(struct vector *vec)
 {
     struct center *new_center = malloc(sizeof(struct center));
+    if (new_center == NULL) {
+        printf("An Error Has Occurred\n");
+        free_all();
+        exit(1);
+    }
     new_center->next = NULL;
     new_center->num_assigned = 0;
     
@@ -65,7 +130,7 @@ struct center *create_center(struct vector *vec)
 
 double points_distance(struct cord *p1, struct cord *p2){
     double distance = 0.0;
-    while (p1 != NULL && p2 != NULL)
+        while (p1 != NULL && p2 != NULL)
         {
             distance += pow(p1->value - p2->value, 2);
             p1 = p1->next;
@@ -83,18 +148,9 @@ struct center *closest_center(struct vector *vec, struct center *centers)
 
     while(curr_center != NULL)
     {
-        double distance = 0.0;
         struct cord *vec_cord = vec->cords;
         struct cord *center_cord = curr_center->cords;
-
-        while (vec_cord != NULL && center_cord != NULL)
-        {
-            distance += pow(vec_cord->value - center_cord->value, 2);
-            vec_cord = vec_cord->next;
-            center_cord = center_cord->next;
-        }
-
-        distance = sqrt(distance);
+        double distance = points_distance(vec_cord, center_cord);
 
         if (distance < min_distance)
         {
@@ -115,6 +171,7 @@ struct center* init_centers(struct vector *vectors, int K)
         struct center *new_center = create_center(curr_vec);
         if(head_center == NULL) {
             head_center = new_center;
+            global_cent_ptr = head_center; // Store global pointer for cleanup if needed
         } else {
             last_center->next = new_center;
         }
@@ -140,7 +197,7 @@ void assign_vector_to_center(struct vector *vec, struct center *center)
 void update_all_points(struct vector *vectors, struct center *centers)
 {
     struct vector *curr_vec = vectors;
-    while (curr_vec != NULL)
+    while (curr_vec != NULL && curr_vec->next != NULL)
     {
         struct center *closest = closest_center(curr_vec, centers);
         assign_vector_to_center(curr_vec, closest);
@@ -148,14 +205,38 @@ void update_all_points(struct vector *vectors, struct center *centers)
     }
 }
 
-int update_all_centers(struct center *centers)
+void delete_point_from_its_center(struct center *centers, struct vector *point)
+{
+    struct center *closest = closest_center(point, centers);
+    closest->num_assigned--;
+    struct cord *p_curr = point->cords;
+    struct cord *c_curr = closest->sum_assigned;
+    while (p_curr != NULL && c_curr != NULL)
+    {
+        c_curr->value -= p_curr->value;
+
+        p_curr = p_curr->next;
+        c_curr = c_curr->next;
+    }
+}
+
+int update_all_centers(struct center *centers, struct vector *first_point)
 {
     int moved = 0;
     double eps = 0.001;
     struct center *curr_cent = centers;
     while (curr_cent!=NULL)
     {
-        ///calculate the updated coaordinates, and the distance
+        if (curr_cent->num_assigned == 0){
+            assign_vector_to_center(first_point, curr_cent);
+            delete_point_from_its_center(centers, first_point);
+        }
+        curr_cent = curr_cent->next;
+    }
+    curr_cent = centers;
+    while (curr_cent!=NULL)
+    {
+        // calculate the updated coaordinates, and the distance
         struct cord *curr_cord = curr_cent->sum_assigned;
         while (curr_cord!=NULL)
         {
@@ -166,7 +247,8 @@ int update_all_centers(struct center *centers)
         {
             moved = 1;
         }
-        ///update the center, and delete all assigned points from it
+
+        // update the center, and delete all assigned points from it
         struct cord *tmp = curr_cent->cords;
         curr_cent->cords = curr_cent->sum_assigned;
         curr_cord = tmp;
@@ -208,10 +290,21 @@ int main(int argc, char **argv)
     char c;
 
     head_cord = malloc(sizeof(struct cord));
+    if(head_cord == NULL) {
+        printf("An Error Has Occurred\n");
+        free_all();
+        exit(1);
+    }
     curr_cord = head_cord;
     curr_cord->next = NULL;
 
     head_vec = malloc(sizeof(struct vector));
+    if(head_vec == NULL) {
+        printf("An Error Has Occurred\n");
+        free_all();
+        exit(1);
+    }
+    global_vec_ptr = head_vec; // Store global pointer for cleanup if needed
     curr_vec = head_vec;
     curr_vec->next = NULL;
 
@@ -223,9 +316,19 @@ int main(int argc, char **argv)
             curr_cord->value = n;
             curr_vec->cords = head_cord;
             curr_vec->next = malloc(sizeof(struct vector));
+            if(curr_vec->next == NULL) {
+                printf("An Error Has Occurred\n");
+                free_all();
+                exit(1);
+            }
             curr_vec = curr_vec->next;
             curr_vec->next = NULL;
             head_cord = malloc(sizeof(struct cord));
+            if(head_cord == NULL) {
+                printf("An Error Has Occurred\n");
+                free_all();
+                exit(1);
+            }
             curr_cord = head_cord;
             curr_cord->next = NULL;
             rows++;
@@ -234,12 +337,23 @@ int main(int argc, char **argv)
 
         curr_cord->value = n;
         curr_cord->next = malloc(sizeof(struct cord));
+        if(curr_cord->next == NULL) {
+            printf("An Error Has Occurred\n");
+            free_all();
+            exit(1);
+        }
         curr_cord = curr_cord->next;
         curr_cord->next = NULL;
     }
 
+    if (rows == 0) {
+        printf("An Error Has Occurred\n");
+        free_all();
+        exit(1);
+    }
+
     if ((K<1) || (K>rows)){
-        printf("Incorrect number of clusters");
+        printf("Incorrect number of clusters!");
     } 
     if (argc > 2){
         iter = atoi(argv[2]);
@@ -257,10 +371,12 @@ int main(int argc, char **argv)
     while (changed && (count < iter))
     {
         update_all_points(head_vec, centers);
-        changed = update_all_centers(centers);
+        changed = update_all_centers(centers, head_vec);
         count++;
     }
 
     print_centers(centers);
+    delete_points_list(head_vec);
+    delete_centers_list(centers);
     return 0;
 }
