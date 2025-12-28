@@ -133,14 +133,14 @@ struct center *create_center(struct vector *vec)
 
 double points_distance(struct cord *p1, struct cord *p2){
     double distance = 0.0;
-        while (p1 != NULL && p2 != NULL)
-        {
-            distance += pow(p1->value - p2->value, 2);
-            p1 = p1->next;
-            p2 = p2->next;
-        }
+    while (p1 != NULL && p2 != NULL)
+    {
+        distance += pow(p1->value - p2->value, 2);
+        p1 = p1->next;
+        p2 = p2->next;
+    }
 
-        return sqrt(distance);
+    return sqrt(distance);
 }
 
 struct center *closest_center(struct vector *vec, struct center *centers)
@@ -297,9 +297,17 @@ int main(int argc, char **argv)
     struct vector *head_vec, *curr_vec;
     struct cord *head_cord, *curr_cord;
     struct center *centers;
-    int rows = 0, K=atoi(argv[1]), iter, count, changed;
+    int rows = 0, K, iter, count, changed;
     double n;
     char c;
+
+    if(argc < 2){
+        printf("An Error Has Occurred\n");
+        exit(1);
+    }
+
+    K = atoi(argv[1]);
+
 
     head_cord = malloc(sizeof(struct cord));
     if(head_cord == NULL) {
@@ -335,6 +343,7 @@ int main(int argc, char **argv)
             }
             curr_vec = curr_vec->next;
             curr_vec->next = NULL;
+            curr_vec->cords = NULL;
             head_cord = malloc(sizeof(struct cord));
             if(head_cord == NULL) {
                 printf("An Error Has Occurred\n");
@@ -358,15 +367,21 @@ int main(int argc, char **argv)
         curr_cord->next = NULL;
     }
 
+    if(head_cord!=NULL) {
+        free(head_cord);
+        head_cord = NULL;
+    }
+
     if (rows == 0) {
         printf("An Error Has Occurred\n");
         free_all();
         exit(1);
     }
 
-    if ((K<1) || (K>rows)){
+    if ((K<=1) || (K>=rows)){
         printf("Incorrect number of clusters!");
     } 
+    
     if (argc > 2){
         iter = atoi(argv[2]);
         if ((iter<2) || (iter>799)){

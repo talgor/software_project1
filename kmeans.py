@@ -99,11 +99,11 @@ def main():
     if len(sys.argv) > 2:
         try:
             ITER = int(sys.argv[2])
+            if (ITER < 2) or (ITER > 799):
+                print("Incorrect number of iterations!")
+                return
         except Exception:
             print("Incorrect number of iterations!")
-        if (ITER < 2) or (ITER > 799):
-            print("Incorrect number of iterations!")
-            return
 
     #parse and dreate points
     parse(sys.stdin)
@@ -115,10 +115,10 @@ def main():
 
 
 if __name__ == "__main__":
-    # try:
+    try:
         main()
-    # except Exception:
-        # print("An Error Has Occured")
+    except Exception:
+        print("An Error Has Occured")
 
 
 
