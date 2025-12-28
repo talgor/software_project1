@@ -310,7 +310,6 @@ int main(int argc, char **argv)
     for (i = 0; argv[1][i] != '\0'; i++) {
         if (argv[1][i] < '0' || argv[1][i] > '9') {
             printf("Incorrect number of clusters!\n");
-            free_all();
             exit(1);
         }
     }
