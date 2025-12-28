@@ -297,7 +297,7 @@ int main(int argc, char **argv)
     struct vector *head_vec, *curr_vec;
     struct cord *head_cord, *curr_cord;
     struct center *centers;
-    int rows = 0, K, iter, count, changed;
+    int rows = 0, K, iter, count, changed, i;
     double n;
     char c;
 
@@ -306,11 +306,18 @@ int main(int argc, char **argv)
         exit(1);
     }
 
+    for (i = 0; argv[1][i] != '\0'; i++) {
+        if (argv[1][i] < '0' || argv[1][i] > '9') {
+            printf("Incorrect number of clusters!\n");
+            free_all();
+            exit(1);
+        }
+    }
+
     K = atoi(argv[1]);
 
     if (argc > 2) {
 
-        int i;
         for (i = 0; argv[2][i] != '\0'; i++) {
             if (argv[2][i] < '0' || argv[2][i] > '9') {
                printf("Incorrect maximum iteration!\n");

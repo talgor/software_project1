@@ -87,31 +87,39 @@ def parse(inp):
     return
 
 def main():
-    #update K and ITER
+    if(len(sys.argv) < 2 or len(sys.argv) > 3):
+        print("An Error Has Occurred")
+        sys.exit(1)
     try:
         K = int(sys.argv[1])
     except Exception:
         print("Incorrect number of clusters!")
-        return
+        sys.exit(1)
     if K < 2:
         print("Incorrect number of clusters!")
-        return
+        sys.exit(1)
     if len(sys.argv) > 2:
         try:
             ITER = int(sys.argv[2])
             if (ITER < 2) or (ITER > 799):
-                print("Incorrect number of iterations!")
-                return
+                print("Incorrect maximum iteration!")
+                sys.exit(1)
         except Exception:
-            print("Incorrect number of iterations!")
+            print("Incorrect maximum iteration!")
+            sys.exit(1)
 
     #parse and dreate points
     parse(sys.stdin)
+    if(K >= len(points)):
+        print("Incorrect number of clusters!")
+        sys.exit(1)
+
     if points:
         final_centers = kmeans(points, K)
         
-        for i, center in enumerate(final_centers):
-            print(*center.coords, sep=",")
+        for center in final_centers:
+            formatted_coords = (f"{c:.4f}" for c in center.coords)
+            print(*formatted_coords, sep=",")
 
 
 if __name__ == "__main__":
@@ -119,7 +127,7 @@ if __name__ == "__main__":
         main()
     except Exception:
         print("An Error Has Occured")
-
+        sys.exit(1)
 
 
 
