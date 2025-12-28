@@ -301,13 +301,36 @@ int main(int argc, char **argv)
     double n;
     char c;
 
-    if(argc < 2){
+    if (argc < 2 || argc > 3) {
         printf("An Error Has Occurred\n");
         exit(1);
     }
 
     K = atoi(argv[1]);
 
+    if (argc > 2) {
+
+        int i;
+        for (i = 0; argv[2][i] != '\0'; i++) {
+            if (argv[2][i] < '0' || argv[2][i] > '9') {
+               printf("Incorrect maximum iteration!\n");
+                free_all();
+                exit(1);
+            }
+        }
+
+        iter = atoi(argv[2]);
+
+        if ((iter < 2) || (iter > 799)) {
+            printf("Incorrect maximum iteration!\n");
+            free_all();
+            exit(1);
+        }
+    }
+
+    else {
+        iter = 400;
+    }
 
     head_cord = malloc(sizeof(struct cord));
     if(head_cord == NULL) {
@@ -367,6 +390,12 @@ int main(int argc, char **argv)
         curr_cord->next = NULL;
     }
 
+    if ((K<=1) || (K>=rows)) {
+        printf("Incorrect number of clusters!");
+        free_all();
+        exit(1);
+    } 
+
     if(head_cord!=NULL) {
         free(head_cord);
         head_cord = NULL;
@@ -376,20 +405,6 @@ int main(int argc, char **argv)
         printf("An Error Has Occurred\n");
         free_all();
         exit(1);
-    }
-
-    if ((K<=1) || (K>=rows)){
-        printf("Incorrect number of clusters!");
-    } 
-    
-    if (argc > 2){
-        iter = atoi(argv[2]);
-        if ((iter<2) || (iter>799)){
-            printf("Incorrect maximum iteration!");
-        }
-    }
-    else{
-        iter = 400;
     }
 
     centers = init_centers(head_vec, K);
