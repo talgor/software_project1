@@ -110,8 +110,9 @@ def main():
     if points:
         final_centers = kmeans(points, K)
         
-        for i, center in enumerate(final_centers):
-            print(*center.coords, sep=",")
+        for center in final_centers:
+            formatted_coords = (f"{c:.4f}" for c in center.coords)
+            print(*formatted_coords, sep=",")
 
 
 if __name__ == "__main__":
