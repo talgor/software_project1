@@ -29,7 +29,7 @@ void delete_point(struct cord*);
 void delete_points_list(struct vector*);
 void delete_centers_list(struct center*);
 void free_all();
-struct cord* create_cord_node(double);
+struct cord* create_cord_node(double, struct center*);
 struct center *create_center(struct vector*);
 double points_distance(struct cord*, struct cord*);
 struct center *closest_center(struct vector*, struct center*);
@@ -77,10 +77,11 @@ void free_all()
     delete_centers_list(global_cent_ptr);
 }
 
-struct cord* create_cord_node(double val) {
+struct cord* create_cord_node(double val, struct center *cent) {
     struct cord *new_node = malloc(sizeof(struct cord));
     if (new_node == NULL) {
         printf("An Error Has Occurred\n");
+        delete_centers_list(cent);
         free_all();
         exit(1);
     }
@@ -111,8 +112,8 @@ struct center *create_center(struct vector *vec)
     last_sum = NULL;
 
     while (curr_v != NULL) {
-        new_center_cord = create_cord_node(curr_v->value);
-        new_sum_cord = create_cord_node(0.0);
+        new_center_cord = create_cord_node(curr_v->value, new_center);
+        new_sum_cord = create_cord_node(0.0, new_center);
 
         if (new_center->cords == NULL) {
             new_center->cords = new_center_cord;
@@ -314,7 +315,6 @@ int main(int argc, char **argv)
         for (i = 0; argv[2][i] != '\0'; i++) {
             if (argv[2][i] < '0' || argv[2][i] > '9') {
                printf("Incorrect maximum iteration!\n");
-                free_all();
                 exit(1);
             }
         }
@@ -323,7 +323,6 @@ int main(int argc, char **argv)
 
         if ((iter < 2) || (iter > 799)) {
             printf("Incorrect maximum iteration!\n");
-            free_all();
             exit(1);
         }
     }
@@ -335,7 +334,6 @@ int main(int argc, char **argv)
     head_cord = malloc(sizeof(struct cord));
     if(head_cord == NULL) {
         printf("An Error Has Occurred\n");
-        free_all();
         exit(1);
     }
     curr_cord = head_cord;
@@ -344,7 +342,7 @@ int main(int argc, char **argv)
     head_vec = malloc(sizeof(struct vector));
     if(head_vec == NULL) {
         printf("An Error Has Occurred\n");
-        free_all();
+        free(head_cord);
         exit(1);
     }
     global_vec_ptr = head_vec; /* Store global pointer for cleanup if needed */
@@ -383,6 +381,7 @@ int main(int argc, char **argv)
         curr_cord->next = malloc(sizeof(struct cord));
         if(curr_cord->next == NULL) {
             printf("An Error Has Occurred\n");
+            delete_point(head_cord);
             free_all();
             exit(1);
         }
